@@ -251,6 +251,20 @@
         }
         .indicator-dot.active { background: #b026ff; width: 28px; border-radius: 20px; }
 
+        .history-remove-btn {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(0,0,0,0.6); color: #fff;
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 5; border: 1px solid #444;
+            transition: 0.2s; opacity: 0;
+        }
+        .slide-card:hover .history-remove-btn { opacity: 1; }
+        .history-remove-btn:hover { background: #ff2e63; border-color: #ff2e63; }
+        .history-info {
+            font-size: 0.8rem; color: #b026ff; margin-top: 0.2rem; font-weight: 600;
+        }
+
         .genre-dropdown-container {
             position: relative;
             min-width: 140px;
@@ -644,6 +658,15 @@
         </div>
     </div>
 
+    <div class="carousel-section" id="continue-watching-section" style="display:none;">
+        <div class="section-header">
+            <h2><i class="fas fa-history" style="color:#b026ff;"></i> CONTINUE WATCHING</h2>
+        </div>
+        <div class="carousel-wrapper">
+            <div class="card-scroll" id="continue-watching-scroll"></div>
+        </div>
+    </div>
+
     <div class="carousel-section">
         <div class="section-header">
             <h2><i class="fas fa-fire" style="color:#b026ff;"></i> NOW PLAYING</h2>
@@ -780,6 +803,7 @@
     let episodeData = [];
     let maxEpisodes = 0;
     let skipTimers = {};
+    let watchHistory = JSON.parse(localStorage.getItem('watchHistory')) || [];
 
     const grid = document.getElementById('movies-grid');
     const carouselEl = document.getElementById('latest-carousel');
@@ -797,6 +821,8 @@
     const filterRatingInput = document.getElementById('filter-rating');
     const filterSortSelect = document.getElementById('filter-sort');
     const applyFilterBtn = document.getElementById('apply-filter');
+    const continueWatchingSection = document.getElementById('continue-watching-section');
+    const continueWatchingScroll = document.getElementById('continue-watching-scroll');
 
     async function loadGenres() {
         const options = { headers: { 'Authorization': `Bearer ${TMDB_READ_TOKEN}` } };
@@ -1181,6 +1207,65 @@
         }, 120000);
     }
 
+    function renderContinueWatching() {
+        if (watchHistory.length === 0) {
+            continueWatchingSection.style.display = 'none';
+            return;
+        }
+        continueWatchingSection.style.display = 'block';
+        continueWatchingScroll.innerHTML = '';
+        
+        watchHistory.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'slide-card';
+            const poster = item.poster_path ? IMG_BASE + item.poster_path : 'https://via.placeholder.com/300x450?text=No+Poster';
+            
+            let infoHtml = '';
+            if (item.type === 'tv') {
+                infoHtml = `<div class="history-info">S${item.season} E${item.episode}</div>`;
+            } else {
+                infoHtml = `<div class="history-info">Movie</div>`;
+            }
+
+            card.innerHTML = `
+                <div class="history-remove-btn" data-id="${item.id}"><i class="fas fa-times"></i></div>
+                <img class="slide-poster" src="${poster}" loading="lazy">
+                <div class="slide-info">
+                    <h4>${item.title}</h4>
+                    ${infoHtml}
+                </div>
+            `;
+            
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.history-remove-btn')) {
+                    openPlayer(item.id, item.type, item.isAnime);
+                }
+            });
+            
+            card.querySelector('.history-remove-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeFromHistory(item.id);
+            });
+            
+            continueWatchingScroll.appendChild(card);
+        });
+    }
+
+    function addToHistory(meta) {
+        // Remove existing entry for this ID to move it to top
+        watchHistory = watchHistory.filter(i => i.id !== meta.id);
+        watchHistory.unshift(meta);
+        if (watchHistory.length > 20) watchHistory.pop(); // Limit to 20 items
+        localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
+        renderContinueWatching();
+    }
+
+    function removeFromHistory(id) {
+        watchHistory = watchHistory.filter(i => i.id !== id);
+        localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
+        renderContinueWatching();
+    }
+
     function playNextEpisode() {
         if (currentEpisode < maxEpisodes) {
             currentEpisode++;
@@ -1252,6 +1337,13 @@
         currentSourceIndex = 0;
         
         hideAllSkipButtons();
+
+        // Check history for saved progress
+        const savedState = watchHistory.find(i => i.id === id);
+        if (savedState && savedState.type === 'tv') {
+            currentSeason = savedState.season || 1;
+            currentEpisode = savedState.episode || 1;
+        }
         
         const options = { headers: { 'Authorization': `Bearer ${TMDB_READ_TOKEN}` } };
         let detailUrl = type === 'movie' ? `${API_BASE}/movie/${id}` : `${API_BASE}/tv/${id}`;
@@ -1269,6 +1361,17 @@
                 if (data.runtime) document.getElementById('modal-runtime').innerText = data.runtime + ' min';
                 else if (data.episode_run_time && data.episode_run_time[0]) document.getElementById('modal-runtime').innerText = data.episode_run_time[0] + ' min/ep';
                 else document.getElementById('modal-runtime').innerText = '—';
+
+                // Save to history (for movies, we save immediately. For TV, we save in loadEpisodes)
+                if (type === 'movie') {
+                    addToHistory({
+                        id: id,
+                        type: type,
+                        isAnime: isAnime,
+                        title: data.title || data.name,
+                        poster_path: data.poster_path
+                    });
+                }
             })
             .catch(() => {
                 document.getElementById('movie-title-header').innerText = 'Error loading';
@@ -1302,7 +1405,11 @@
                             }
                         });
                     }
-                    currentSeason = data.seasons?.find(s=>s.season_number>0)?.season_number || 1;
+                    
+                    // If we didn't load from history, find the first valid season
+                    if (!savedState || savedState.season === undefined) {
+                        currentSeason = data.seasons?.find(s=>s.season_number>0)?.season_number || 1;
+                    }
                     
                     const currentSeasonData = data.seasons?.find(s => s.season_number === currentSeason);
                     maxEpisodes = currentSeasonData?.episode_count || 0;
@@ -1337,7 +1444,25 @@
                         epSelect.appendChild(opt);
                     });
                 }
-                currentEpisode = data.episodes?.[0]?.episode_number || 1;
+                
+                // Check if we should restore a saved episode
+                const savedState = watchHistory.find(i => i.id === tvId);
+                if (savedState && savedState.season === season) {
+                    // Ensure the saved episode actually exists in this season
+                    const exists = data.episodes?.find(e => e.episode_number === savedState.episode);
+                    currentEpisode = exists ? savedState.episode : (data.episodes?.[0]?.episode_number || 1);
+                } else {
+                    currentEpisode = data.episodes?.[0]?.episode_number || 1;
+                }
+
+                // Save/Update History for TV
+                addToHistory({
+                    id: tvId, type: currentModalType, isAnime: currentIsAnime,
+                    title: document.getElementById('modal-title').innerText,
+                    poster_path: document.getElementById('modal-poster').getAttribute('src').replace(IMG_BASE, ''),
+                    season: season, episode: currentEpisode
+                });
+
                 buildSourceButtons(currentModalType, currentModalId, currentSeason, currentEpisode, currentAudioLang, currentIsAnime);
             })
             .catch(() => {
@@ -1359,6 +1484,15 @@
     document.getElementById('episode-select')?.addEventListener('change', (e) => {
         currentEpisode = parseInt(e.target.value);
         hideAllSkipButtons();
+        
+        // Update History on episode change
+        addToHistory({
+            id: currentModalId, type: currentModalType, isAnime: currentIsAnime,
+            title: document.getElementById('modal-title').innerText,
+            poster_path: document.getElementById('modal-poster').getAttribute('src').replace(IMG_BASE, ''),
+            season: currentSeason, episode: currentEpisode
+        });
+
         buildSourceButtons(currentModalType, currentModalId, currentSeason, currentEpisode, currentAudioLang, currentIsAnime);
         
         setTimeout(() => {
@@ -1430,6 +1564,7 @@
         await loadGenres();
         buildGenreDropdown();
         loadCarousel();
+        renderContinueWatching();
         loadGridContent();
     })();
 })();
