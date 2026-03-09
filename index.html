@@ -41,6 +41,7 @@
             gap: 0.3rem;
             white-space: nowrap;
             text-shadow: 0 0 8px #b026ff66;
+            cursor: pointer;
         }
         #search-container {
             flex: 1 1 200px;
@@ -783,6 +784,7 @@
     const grid = document.getElementById('movies-grid');
     const carouselEl = document.getElementById('latest-carousel');
     const searchInput = document.getElementById('search-input');
+    const logo = document.querySelector('header h1');
     const typeBtns = document.querySelectorAll('.type-btn');
     const genreDropdownBtn = document.getElementById('genreDropdownBtn');
     const genreDropdownMenu = document.getElementById('genreDropdownMenu');
@@ -1057,6 +1059,10 @@
             if (q) searchContent(q);
             else { activeGenreId = null; currentPage = 1; loadGridContent(); }
         }, 400);
+    });
+
+    logo.addEventListener('click', () => {
+        window.location.reload();
     });
 
     async function searchContent(query) {
