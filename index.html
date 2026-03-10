@@ -602,6 +602,44 @@
             100% { transform: scale(1); opacity: 0.9; }
         }
 
+        /* Auth Modal Styles */
+        .auth-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2001;
+            backdrop-filter: blur(5px); align-items: center; justify-content: center;
+        }
+        .auth-box {
+            background: #111; border: 1px solid #333; padding: 2rem; border-radius: 24px;
+            width: 100%; max-width: 400px; position: relative;
+            box-shadow: 0 0 30px rgba(176, 38, 255, 0.2);
+        }
+        .auth-header { text-align: center; margin-bottom: 1.5rem; }
+        .auth-header h2 { color: #b026ff; margin-bottom: 0.5rem; }
+        .auth-input {
+            width: 100%; background: #1a1a1a; border: 1px solid #333; color: white;
+            padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 1rem; font-size: 1rem;
+        }
+        .auth-input:focus { outline: none; border-color: #b026ff; }
+        .auth-btn {
+            width: 100%; background: #b026ff; color: white; border: none; padding: 0.8rem;
+            border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s;
+        }
+        .auth-btn:hover { background: #8c1cce; }
+        .auth-switch { text-align: center; margin-top: 1rem; font-size: 0.9rem; color: #888; }
+        .auth-switch span { color: #b026ff; cursor: pointer; font-weight: 600; }
+        .auth-close {
+            position: absolute; top: 1rem; right: 1rem; color: #666; cursor: pointer; font-size: 1.2rem;
+        }
+        .auth-close:hover { color: white; }
+        
+        .user-profile-btn {
+            background: #222; border: 1px solid #444; color: white;
+            padding: 0.5rem 1rem; border-radius: 40px; cursor: pointer;
+            display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .user-profile-btn:hover { border-color: #b026ff; color: #b026ff; }
+        .user-profile-btn.logged-in { background: #b026ff22; border-color: #b026ff; }
+
         @media (max-width: 600px) {
             header { flex-wrap: wrap; }
             h1 { font-size: 1.4rem; }
@@ -627,6 +665,7 @@
             <i class="fas fa-search search-icon"></i>
             <input type="text" id="search-input" placeholder="Search...">
         </div>
+        <button class="user-profile-btn" id="auth-btn"><i class="fas fa-user"></i> <span>Sign In</span></button>
         <button class="user-btn" id="fullscreen-toggle"><i class="fas fa-expand"></i></button>
     </header>
 
@@ -773,12 +812,39 @@
     </div>
 </div>
 
+<!-- Auth Modal -->
+<div id="auth-modal" class="auth-modal">
+    <div class="auth-box">
+        <i class="fas fa-times auth-close" id="auth-close"></i>
+        <div class="auth-header">
+            <h2 id="auth-title">Welcome Back</h2>
+            <p style="color:#888; font-size:0.9rem;">Sync your history across devices</p>
+        </div>
+        <form id="auth-form">
+            <div id="email-group">
+                <input type="email" id="auth-email" class="auth-input" placeholder="Email address" required>
+            </div>
+            <div id="password-group">
+                <input type="password" id="auth-password" class="auth-input" placeholder="Password" required>
+            </div>
+            <div id="code-group" style="display:none;">
+                <input type="text" id="auth-code" class="auth-input" placeholder="Verification Code (6 digits)">
+            </div>
+            <button type="submit" class="auth-btn" id="auth-submit-btn">Sign In</button>
+        </form>
+        <div class="auth-switch" id="auth-switch-text">
+            New here? <span id="switch-auth-mode">Create Account</span>
+        </div>
+    </div>
+</div>
+
 <script>
 (function() {
     const TMDB_API_KEY = 'a61fccf34d3b7d0701fcdde5db6043ab';
     const TMDB_READ_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhNjFmY2NmMzRkM2I3ZDA3MDFmY2RkZTVkYjYwNDNhYiIsIm5iZiI6MTc2MzY0NjIxOS45MSwic3ViIjoiNjkxZjFiMGI0ZWEwMzMyNDQ1MDU4NmRhIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.C29__PfaNFBL2P2mSh8Yf3Rpzj78kz80rB2y5eGIHRM';
     const IMG_BASE = 'https://image.tmdb.org/t/p/w500';
     const API_BASE = 'https://api.themoviedb.org/3';
+    const BACKEND_URL = 'http://localhost:5000/api'; // Change this to your deployed backend URL
 
     let movieGenres = [], tvGenres = [];
     let mediaType = 'movie';
@@ -803,7 +869,11 @@
     let episodeData = [];
     let maxEpisodes = 0;
     let skipTimers = {};
-    let watchHistory = JSON.parse(localStorage.getItem('watchHistory')) || [];
+    
+    // Auth State
+    let authToken = localStorage.getItem('authToken');
+    let userEmail = localStorage.getItem('userEmail');
+    let watchHistory = []; // Will be loaded from backend or local
 
     const grid = document.getElementById('movies-grid');
     const carouselEl = document.getElementById('latest-carousel');
@@ -823,6 +893,143 @@
     const applyFilterBtn = document.getElementById('apply-filter');
     const continueWatchingSection = document.getElementById('continue-watching-section');
     const continueWatchingScroll = document.getElementById('continue-watching-scroll');
+    
+    // Auth Elements
+    const authBtn = document.getElementById('auth-btn');
+    const authModal = document.getElementById('auth-modal');
+    const authClose = document.getElementById('auth-close');
+    const authForm = document.getElementById('auth-form');
+    const switchAuthMode = document.getElementById('switch-auth-mode');
+    const authTitle = document.getElementById('auth-title');
+    const authSubmitBtn = document.getElementById('auth-submit-btn');
+    const codeGroup = document.getElementById('code-group');
+    const passGroup = document.getElementById('password-group');
+    
+    let authMode = 'login'; // login, signup, verify
+
+    // --- AUTH LOGIC ---
+    function updateAuthUI() {
+        if (authToken) {
+            authBtn.innerHTML = `<i class="fas fa-user-check"></i> <span>${userEmail.split('@')[0]}</span>`;
+            authBtn.classList.add('logged-in');
+            authBtn.onclick = logout;
+            loadBackendHistory();
+        } else {
+            authBtn.innerHTML = `<i class="fas fa-user"></i> <span>Sign In</span>`;
+            authBtn.classList.remove('logged-in');
+            authBtn.onclick = () => { authModal.style.display = 'flex'; };
+            watchHistory = JSON.parse(localStorage.getItem('watchHistory')) || [];
+            renderContinueWatching();
+        }
+    }
+
+    function logout() {
+        if(confirm('Log out?')) {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userEmail');
+            authToken = null;
+            userEmail = null;
+            updateAuthUI();
+        }
+    }
+
+    authClose.onclick = () => authModal.style.display = 'none';
+    
+    switchAuthMode.onclick = () => {
+        if (authMode === 'login') {
+            authMode = 'signup';
+            authTitle.innerText = 'Create Account';
+            authSubmitBtn.innerText = 'Send Code';
+            switchAuthMode.innerText = 'Sign In';
+            document.getElementById('auth-switch-text').innerHTML = 'Already have an account? <span id="switch-auth-mode">Sign In</span>';
+        } else {
+            authMode = 'login';
+            authTitle.innerText = 'Welcome Back';
+            authSubmitBtn.innerText = 'Sign In';
+            codeGroup.style.display = 'none';
+            passGroup.style.display = 'block';
+            document.getElementById('auth-switch-text').innerHTML = 'New here? <span id="switch-auth-mode">Create Account</span>';
+        }
+        // Re-attach listener since innerHTML changed
+        document.getElementById('switch-auth-mode').onclick = switchAuthMode.onclick;
+    };
+
+    authForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        const code = document.getElementById('auth-code').value;
+
+        authSubmitBtn.disabled = true;
+        authSubmitBtn.innerText = 'Processing...';
+
+        try {
+            if (authMode === 'signup') {
+                const res = await fetch(`${BACKEND_URL}/auth/signup`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                
+                authMode = 'verify';
+                authTitle.innerText = 'Verify Email';
+                passGroup.style.display = 'none';
+                codeGroup.style.display = 'block';
+                authSubmitBtn.innerText = 'Verify Code';
+                alert('Verification code sent to ' + email);
+            } else if (authMode === 'verify') {
+                const res = await fetch(`${BACKEND_URL}/auth/verify`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ email, code })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                
+                finishLogin(data);
+            } else if (authMode === 'login') {
+                const res = await fetch(`${BACKEND_URL}/auth/login`, {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                
+                finishLogin(data);
+            }
+        } catch (err) {
+            alert(err.message);
+            authSubmitBtn.disabled = false;
+            authSubmitBtn.innerText = authMode === 'signup' ? 'Send Code' : (authMode === 'verify' ? 'Verify Code' : 'Sign In');
+        }
+    };
+
+    function finishLogin(data) {
+        authToken = data.token;
+        userEmail = data.user.email;
+        watchHistory = data.user.history || [];
+        
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('userEmail', userEmail);
+        
+        authModal.style.display = 'none';
+        authSubmitBtn.disabled = false;
+        updateAuthUI();
+        renderContinueWatching();
+    }
+
+    async function loadBackendHistory() {
+        if (!authToken) return;
+        try {
+            const res = await fetch(`${BACKEND_URL}/user/history`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (res.ok) {
+                watchHistory = await res.json();
+                renderContinueWatching();
+            }
+        } catch(e) { console.log('History sync failed'); }
+    }
 
     async function loadGenres() {
         const options = { headers: { 'Authorization': `Bearer ${TMDB_READ_TOKEN}` } };
@@ -1251,12 +1458,22 @@
         });
     }
 
-    function addToHistory(meta) {
+    async function addToHistory(meta) {
         // Remove existing entry for this ID to move it to top
         watchHistory = watchHistory.filter(i => i.id !== meta.id);
         watchHistory.unshift(meta);
         if (watchHistory.length > 20) watchHistory.pop(); // Limit to 20 items
-        localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
+        
+        if (authToken) {
+            // Sync to backend
+            fetch(`${BACKEND_URL}/user/history`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                body: JSON.stringify(meta)
+            }).catch(e => console.log('Sync error'));
+        } else {
+            localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
+        }
         renderContinueWatching();
     }
 
@@ -1548,6 +1765,21 @@
         }, 100);
     });
 
+    document.getElementById('download-btn').addEventListener('click', () => {
+        const title = document.getElementById('modal-title').innerText;
+        
+        if (currentIsAnime) {
+            window.open(`https://nyaa.si/?f=0&c=0_0&q=${encodeURIComponent(title)}`, '_blank');
+        } else if (currentModalType === 'movie') {
+            window.open(`https://yts.mx/browse-movies/${encodeURIComponent(title)}`, '_blank');
+        } else {
+            const s = currentSeason.toString().padStart(2, '0');
+            const e = currentEpisode.toString().padStart(2, '0');
+            const query = `${title} S${s}E${e}`;
+            window.open(`https://1337x.to/search/${encodeURIComponent(query)}/1/`, '_blank');
+        }
+    });
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const modal = document.getElementById('movie-modal');
@@ -1564,6 +1796,7 @@
         await loadGenres();
         buildGenreDropdown();
         loadCarousel();
+        updateAuthUI(); // Check login state on load
         renderContinueWatching();
         loadGridContent();
     })();
