@@ -44,8 +44,8 @@
             cursor: pointer;
         }
         #search-container {
-            flex: 1 1 200px;
-            min-width: 180px;
+            flex: 0 1 250px;
+            min-width: 150px;
             position: relative;
         }
         #search-input {
@@ -326,6 +326,7 @@
             padding: 0.5rem 1rem 2rem;
             max-width: 1500px;
             margin: 0 auto;
+            min-height: 60vh;
         }
         .movie-card {
             background: #1a1a1a;
@@ -1295,6 +1296,24 @@
             if (q) searchContent(q);
             else { activeGenreId = null; currentPage = 1; loadGridContent(); }
         }, 400);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            // Visual feedback
+            searchInput.style.transform = 'scale(0.95)';
+            searchInput.style.boxShadow = '0 0 15px #b026ff';
+            setTimeout(() => {
+                searchInput.style.transform = 'scale(1)';
+                searchInput.style.boxShadow = 'none';
+            }, 150);
+            
+            clearTimeout(window.searchDelay);
+            const q = searchInput.value.trim();
+            if (q) searchContent(q);
+            else { activeGenreId = null; currentPage = 1; loadGridContent(); }
+        }
     });
 
     logo.addEventListener('click', () => {
