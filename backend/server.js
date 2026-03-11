@@ -16,7 +16,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tkmovies')
     .catch(err => console.log(err));
 
 // User Model
-const User = require('./models/User');
+const User = require('./User');
 
 // Email Transporter
 const transporter = nodemailer.createTransport({

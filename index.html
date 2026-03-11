@@ -749,7 +749,7 @@
         </div>
         <div class="player-main-area">
             <div class="player-container">
-                <iframe id="movie-player" allowfullscreen allow="autoplay; encrypted-media; microphone; camera; display-capture; geolocation; midi; payment; vr; xr-spatial-tracking"></iframe>
+                <iframe id="movie-player" allowfullscreen allow="autoplay; encrypted-media; microphone; camera; display-capture; geolocation; midi; payment; xr-spatial-tracking"></iframe>
                 
                 <div id="skip-intro-btn" class="skip-btn">
                     <i class="fas fa-forward"></i> 
@@ -973,7 +973,7 @@
                 if (!res.ok) throw new Error(data.message);
                 
                 authMode = 'verify';
-                authTitle.innerText = 'Verify Email';
+                authTitle.innerText = 'Enter Verification Code';
                 passGroup.style.display = 'none';
                 codeGroup.style.display = 'block';
                 authSubmitBtn.innerText = 'Verify Code';
@@ -1001,6 +1001,9 @@
             alert(err.message);
             authSubmitBtn.disabled = false;
             authSubmitBtn.innerText = authMode === 'signup' ? 'Send Code' : (authMode === 'verify' ? 'Verify Code' : 'Sign In');
+        }
+        finally{
+            console.log("authForm.onsubmit function ran");
         }
     };
 
@@ -1765,21 +1768,6 @@
         }, 100);
     });
 
-    document.getElementById('download-btn').addEventListener('click', () => {
-        const title = document.getElementById('modal-title').innerText;
-        
-        if (currentIsAnime) {
-            window.open(`https://nyaa.si/?f=0&c=0_0&q=${encodeURIComponent(title)}`, '_blank');
-        } else if (currentModalType === 'movie') {
-            window.open(`https://yts.mx/browse-movies/${encodeURIComponent(title)}`, '_blank');
-        } else {
-            const s = currentSeason.toString().padStart(2, '0');
-            const e = currentEpisode.toString().padStart(2, '0');
-            const query = `${title} S${s}E${e}`;
-            window.open(`https://1337x.to/search/${encodeURIComponent(query)}/1/`, '_blank');
-        }
-    });
-
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const modal = document.getElementById('movie-modal');
@@ -1935,5 +1923,6 @@
     console.log('🛡️ Ad blocker initialized');
 })();
 </script>
+
 </body>
 </html>
