@@ -30,14 +30,22 @@ router.get('/', async (req, res) => {
         await page.setRequestInterception(true);
         page.on('request', (request) => {
             const reqUrl = request.url();
+            const resourceType = request.resourceType();
+            
             if (reqUrl.includes('.m3u8') || reqUrl.includes('.mp4')) {
                 streamUrl = reqUrl;
             }
-            request.continue();
+            
+            // Block heavy/unnecessary resources to prevent timeouts
+            if (['image', 'stylesheet', 'font'].includes(resourceType)) {
+                request.abort();
+            } else {
+                request.continue();
+            }
         });
 
         // Load the iframe embed URL
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 15000 });
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
         await browser.close();
 
         if (!streamUrl) {
