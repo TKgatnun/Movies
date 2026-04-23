@@ -744,6 +744,9 @@
             <button class="back-btn" id="back-btn"><i class="fas fa-arrow-left"></i></button>
             <div class="movie-title-header" id="movie-title-header"></div>
             <div style="display: flex; gap: 0.5rem;">
+                <button class="control-btn" id="download-btn" title="Download Movie" style="display: none;">
+                    <i class="fas fa-download"></i>
+                </button>
                 <button class="control-btn" id="refresh-player"><i class="fas fa-redo"></i></button>
                 <button class="control-btn" id="fullscreen-modal-toggle"><i class="fas fa-expand"></i></button>
             </div>
@@ -1564,6 +1567,7 @@
     function openPlayer(id, type, isAnime = false) {
         const modal = document.getElementById('movie-modal');
         const player = document.getElementById('movie-player');
+        const downloadBtn = document.getElementById('download-btn');
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
         document.getElementById('movie-title-header').innerText = 'Loading...';
@@ -1611,6 +1615,50 @@
                         poster_path: data.poster_path
                     });
                 }
+            
+            // Show download button and attach logic
+            downloadBtn.style.display = 'block';
+            downloadBtn.onclick = async () => {
+                const currentSrc = document.getElementById('movie-player').src;
+                if (!currentSrc) return alert('Please select a source first.');
+                
+                const title = (data.title || data.name || 'Movie').replace(/[^a-z0-9]/gi, '_');
+                
+                // Show loading state
+                downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                downloadBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`${BACKEND_URL}/download?url=${encodeURIComponent(currentSrc)}`);
+                    const resData = await response.json();
+                    
+                    if (!response.ok) throw new Error(resData.error || 'Failed to extract video link.');
+
+                    if (resData.isHls) {
+                        // Generate a local .m3u playlist file for HLS streams
+                        const m3uContent = `#EXTM3U\n#EXTINF:-1,${title}\n${resData.streamUrl}`;
+                        const blob = new Blob([m3uContent], { type: 'audio/mpegurl' });
+                        const blobUrl = URL.createObjectURL(blob);
+                        
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = `${title}_stream.m3u`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        
+                        alert('Stream link extracted!\n\nAn .m3u playlist file was downloaded. You can open this file with VLC Media Player to watch the stream locally, or use VLC\'s "Convert/Save" feature to download it as an MP4 using your own internet connection.');
+                    } else {
+                        // Direct MP4 link
+                        window.open(resData.streamUrl, '_blank');
+                    }
+                } catch (err) {
+                    alert('Error: ' + err.message);
+                } finally {
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+                    downloadBtn.disabled = false;
+                }
+            };
             })
             .catch(() => {
                 document.getElementById('movie-title-header').innerText = 'Error loading';
@@ -1659,7 +1707,8 @@
                         setupSkipIntro();
                         setupSkipOutro();
                     }, 5000);
-                });
+                })
+                .catch(err => console.error("Failed to load TV seasons", err));
         } else {
             document.getElementById('tv-controls').style.display = 'none';
             buildSourceButtons(type, id, null, null, currentAudioLang, isAnime);
@@ -1796,6 +1845,11 @@
                 modal.style.display = 'none';
                 document.body.style.overflow = '';
             }
+                
+                const authModal = document.getElementById('auth-modal');
+                if (authModal.style.display === 'flex') {
+                    authModal.style.display = 'none';
+                }
         }
     });
 
