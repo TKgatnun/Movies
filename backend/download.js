@@ -21,6 +21,16 @@ router.get('/', async (req, res) => {
         
         const page = await browser.newPage();
         
+        // Automatically close any popup tabs opened by invisible ad overlays to keep focus on the player
+        browser.on('targetcreated', async (target) => {
+            if (target.type() === 'page') {
+                const newPage = await target.page();
+                if (newPage && newPage !== page) {
+                    await newPage.close().catch(() => {});
+                }
+            }
+        });
+
         // Spoof a regular browser User-Agent
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
         
@@ -62,10 +72,10 @@ router.get('/', async (req, res) => {
                 const contentType = (response.headers()['content-type'] || '').toLowerCase();
                 
                 if (
-                    contentType.includes('application/vnd.apple.mpegurl') || 
-                    contentType.includes('application/x-mpegurl') || 
+                    contentType.includes('mpegurl') || 
                     contentType.includes('video/mp4') ||
-                    contentType.includes('video/webm')
+                    contentType.includes('video/webm') ||
+                    contentType.includes('application/dash+xml')
                 ) {
                     streamUrl = resUrl;
                     resolve();
@@ -76,13 +86,21 @@ router.get('/', async (req, res) => {
         // Load the iframe embed URL, resolving early if the stream is found
         await Promise.race([
             streamPromise,
-            page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {})
+            // Use networkidle2 so Puppeteer waits for nested iframes (like VidSrc's player) to finish loading
+            page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {})
         ]);
 
         if (!streamUrl) {
             // Many streaming sites require a user click to initialize the video player
             try {
+                // Give the player 2 extra seconds to fully mount its UI components after the network settles
+                await new Promise(r => setTimeout(r, 2000));
+
                 const { width, height } = page.viewport();
+                // Move the mouse to the center first to trigger any hover-state UI
+                await page.mouse.move(width / 2, height / 2);
+                await new Promise(r => setTimeout(r, 500));
+
                 // Multiple clicks to bypass invisible ad overlays / popunders
                 for (let i = 0; i < 3; i++) {
                     await page.mouse.click(width / 2, height / 2);
