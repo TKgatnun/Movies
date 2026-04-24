@@ -1654,7 +1654,7 @@
                         a.click();
                         document.body.removeChild(a);
                         
-                        alert("Download Ready!\n\nWhy is the file so small (only ~400 bytes)?\nBecause this is a streaming playlist (.m3u), not the video file itself. It contains the blueprint for the 1.5GB+ movie.\n\nTo download the full MP4:\n1. Open VLC Media Player on your PC/Mac.\n2. Click 'Media' > 'Convert / Save'.\n3. Add this .m3u file and click 'Convert / Save'.\n4. Select 'Video - H.264 + MP3 (MP4)'.\n5. Choose a destination file and click 'Start'.\n\nVLC will now download and stitch the full movie together for you using your internet connection!");
+                        alert("Download Ready!\n\nWhy is the file so small (only ~400 bytes)?\nBecause this is a streaming playlist (.m3u), not the video file itself. It contains the blueprint for the movie.\n\nTo download the full MP4:\n1. Open VLC Media Player on your PC/Mac.\n2. Click 'Media' > 'Convert / Save'.\n3. Add this .m3u file and click 'Convert / Save'.\n4. Select 'Video - H.264 + MP3 (MP4)'.\n5. Choose a destination file and click 'Start'.\n\n⚠️ IF VLC GIVES AN ERROR:\nThe stream might be \"IP-Locked\". Close VLC, switch to a different Source (like VidSrc or SuperEmbed) in the video player, and click Download again!");
                     } else {
                         // Direct MP4 link
                         window.open(resData.streamUrl, '_blank');

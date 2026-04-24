@@ -22,8 +22,13 @@ router.get('/', async (req, res) => {
         const page = await browser.newPage();
         
         // Spoof a regular browser User-Agent
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
         
+        // Set a Referer. Most streaming sites block direct access without a referer header to prevent hotlinking.
+        await page.setExtraHTTPHeaders({
+            'Referer': req.get('referer') || 'https://google.com/'
+        });
+
         let streamUrl = null;
 
         // Bypass basic headless detection
@@ -47,12 +52,8 @@ router.get('/', async (req, res) => {
                     resolve();
                 }
                 
-                // Block heavy/unnecessary resources to prevent timeouts
-                if (['image', 'stylesheet', 'font'].includes(resourceType)) {
-                    request.abort();
-                } else {
-                    request.continue();
-                }
+                // Let all resources load. Many anti-bot systems check if CSS/Images loaded to detect scrapers.
+                request.continue();
             });
 
             // Also listen to responses to catch obfuscated URLs by their MIME type
@@ -86,6 +87,8 @@ router.get('/', async (req, res) => {
                 for (let i = 0; i < 3; i++) {
                     await page.mouse.click(width / 2, height / 2);
                     await new Promise(r => setTimeout(r, 800));
+                    // Click slightly offset in case the play button isn't perfectly centered
+                    await page.mouse.click(width / 2, (height / 2) + 40);
                 }
                 // Also try keyboard interaction if an iframe got focused
                 await page.keyboard.press('Space');
