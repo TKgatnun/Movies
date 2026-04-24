@@ -26,26 +26,82 @@ router.get('/', async (req, res) => {
         
         let streamUrl = null;
 
-        // Intercept network requests looking for the video manifest
-        await page.setRequestInterception(true);
-        page.on('request', (request) => {
-            const reqUrl = request.url();
-            const resourceType = request.resourceType();
-            
-            if (reqUrl.includes('.m3u8') || reqUrl.includes('.mp4')) {
-                streamUrl = reqUrl;
-            }
-            
-            // Block heavy/unnecessary resources to prevent timeouts
-            if (['image', 'stylesheet', 'font'].includes(resourceType)) {
-                request.abort();
-            } else {
-                request.continue();
-            }
+        // Bypass basic headless detection
+        await page.evaluateOnNewDocument(() => {
+            Object.defineProperty(navigator, 'webdriver', { get: () => false });
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+            window.chrome = { runtime: {} };
         });
 
-        // Load the iframe embed URL
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        // Intercept network requests looking for the video manifest
+        await page.setRequestInterception(true);
+        
+        const streamPromise = new Promise(resolve => {
+            page.on('request', (request) => {
+                const reqUrl = request.url();
+                const resourceType = request.resourceType();
+                
+                if (reqUrl.includes('.m3u8') || reqUrl.includes('.mp4') || reqUrl.includes('/playlist.m3u8')) {
+                    streamUrl = reqUrl;
+                    resolve();
+                }
+                
+                // Block heavy/unnecessary resources to prevent timeouts
+                if (['image', 'stylesheet', 'font'].includes(resourceType)) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
+            });
+
+            // Also listen to responses to catch obfuscated URLs by their MIME type
+            page.on('response', (response) => {
+                const resUrl = response.url();
+                const contentType = (response.headers()['content-type'] || '').toLowerCase();
+                
+                if (
+                    contentType.includes('application/vnd.apple.mpegurl') || 
+                    contentType.includes('application/x-mpegurl') || 
+                    contentType.includes('video/mp4') ||
+                    contentType.includes('video/webm')
+                ) {
+                    streamUrl = resUrl;
+                    resolve();
+                }
+            });
+        });
+
+        // Load the iframe embed URL, resolving early if the stream is found
+        await Promise.race([
+            streamPromise,
+            page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {})
+        ]);
+
+        if (!streamUrl) {
+            // Many streaming sites require a user click to initialize the video player
+            try {
+                const { width, height } = page.viewport();
+                // Multiple clicks to bypass invisible ad overlays / popunders
+                for (let i = 0; i < 3; i++) {
+                    await page.mouse.click(width / 2, height / 2);
+                    await new Promise(r => setTimeout(r, 800));
+                }
+                // Also try keyboard interaction if an iframe got focused
+                await page.keyboard.press('Space');
+            } catch (e) {
+                console.log('Click simulation failed:', e.message);
+            }
+
+            // Wait up to 15 additional seconds for the video request to be made after interaction
+            let timeoutId;
+            await Promise.race([
+                streamPromise,
+                new Promise(resolve => { timeoutId = setTimeout(resolve, 15000); })
+            ]);
+            clearTimeout(timeoutId);
+        }
+        
         await browser.close();
 
         if (!streamUrl) {
