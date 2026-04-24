@@ -1636,7 +1636,14 @@
 
                     if (resData.isHls) {
                         // Generate a local .m3u playlist file for HLS streams
-                        const m3uContent = `#EXTM3U\n#EXTINF:-1,${title}\n${resData.streamUrl}`;
+                        // Add VLC options to spoof the browser so the server doesn't block the download
+                        const m3uContent = [
+                            '#EXTM3U',
+                            `#EXTVLCOPT:http-referrer=${currentSrc}`,
+                            '#EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+                            `#EXTINF:-1,${title}`,
+                            resData.streamUrl
+                        ].join('\r\n');
                         const blob = new Blob([m3uContent], { type: 'audio/mpegurl' });
                         const blobUrl = URL.createObjectURL(blob);
                         
@@ -1647,7 +1654,7 @@
                         a.click();
                         document.body.removeChild(a);
                         
-                        alert('Stream link extracted!\n\nAn .m3u playlist file was downloaded. You can open this file with VLC Media Player to watch the stream locally, or use VLC\'s "Convert/Save" feature to download it as an MP4 using your own internet connection.');
+                        alert("Download Ready!\n\nWhy is the file so small (only ~400 bytes)?\nBecause this is a streaming playlist (.m3u), not the video file itself. It contains the blueprint for the 1.5GB+ movie.\n\nTo download the full MP4:\n1. Open VLC Media Player on your PC/Mac.\n2. Click 'Media' > 'Convert / Save'.\n3. Add this .m3u file and click 'Convert / Save'.\n4. Select 'Video - H.264 + MP3 (MP4)'.\n5. Choose a destination file and click 'Start'.\n\nVLC will now download and stitch the full movie together for you using your internet connection!");
                     } else {
                         // Direct MP4 link
                         window.open(resData.streamUrl, '_blank');
