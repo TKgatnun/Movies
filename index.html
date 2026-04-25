@@ -1634,13 +1634,40 @@
                     
                     if (!response.ok) throw new Error(resData.error || 'Failed to extract video link.');
 
-                    if (resData.isHls) {
-                        // Generate a local .m3u playlist file for HLS streams
-                        // Add VLC options to spoof the browser so the server doesn't block the download
+                    if (resData.commands && resData.commands.ytdlp) {
+                        try {
+                            // Attempt to auto-copy the command to the user's clipboard
+                            await navigator.clipboard.writeText(resData.commands.ytdlp);
+                            alert(
+                                "Stream extracted successfully!\n\n" +
+                                "The download command has been AUTOMATICALLY COPIED to your clipboard.\n\n" +
+                                "HOW TO DOWNLOAD:\n" +
+                                "1. Open your Terminal or Command Prompt.\n" +
+                                "2. Paste the command and press Enter.\n\n" +
+                                "(Note: Requires yt-dlp to be installed on your machine)"
+                            );
+                        } catch (err) {
+                            // Fallback to manual prompt if the clipboard API fails or is blocked
+                            prompt(
+                                "Stream extracted successfully! 🚀\n\n" +
+                                "Direct downloads are blocked by the provider's server. To bypass this, you must download via your terminal using the spoofed headers we extracted.\n\n" +
+                                "HOW TO DOWNLOAD:\n" +
+                                "1. Copy the command below.\n" +
+                                "2. Open your Terminal or Command Prompt.\n" +
+                                "3. Paste the command and press Enter.\n\n" +
+                                "(Note: Requires yt-dlp to be installed on your machine)",
+                                resData.commands.ytdlp
+                            );
+                        }
+                    } else if (resData.isHls) {
+                        // Fallback: Generate a local .m3u playlist file for HLS streams if commands aren't available
+                        const referer = (resData.headers && resData.headers.referer) ? resData.headers.referer : currentSrc;
+                        const userAgent = (resData.headers && resData.headers.userAgent) ? resData.headers.userAgent : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+                        
                         const m3uContent = [
                             '#EXTM3U',
-                            `#EXTVLCOPT:http-referrer=${currentSrc}`,
-                            '#EXTVLCOPT:http-user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+                            `#EXTVLCOPT:http-referrer=${referer}`,
+                            `#EXTVLCOPT:http-user-agent=${userAgent}`,
                             `#EXTINF:-1,${title}`,
                             resData.streamUrl
                         ].join('\r\n');
@@ -1654,7 +1681,7 @@
                         a.click();
                         document.body.removeChild(a);
                         
-                        alert("Download Ready!\n\nWhy is the file so small (only ~400 bytes)?\nBecause this is a streaming playlist (.m3u), not the video file itself. It contains the blueprint for the movie.\n\nTo download the full MP4:\n1. Open VLC Media Player on your PC/Mac.\n2. Click 'Media' > 'Convert / Save'.\n3. Add this .m3u file and click 'Convert / Save'.\n4. Select 'Video - H.264 + MP3 (MP4)'.\n5. Choose a destination file and click 'Start'.\n\n⚠️ IF VLC GIVES AN ERROR:\nThe stream might be \"IP-Locked\". Close VLC, switch to a different Source (like VidSrc or SuperEmbed) in the video player, and click Download again!");
+                        alert("Download Ready!\n\nWe downloaded a lightweight .m3u playlist file containing the streaming blueprint.\n\nTo download the full MP4:\n1. Open VLC Media Player on your PC/Mac.\n2. Click 'Media' > 'Convert / Save'.\n3. Add this .m3u file and click 'Convert / Save'.\n4. Select 'Video - H.264 + MP3 (MP4)'.\n5. Choose a destination file and click 'Start'.");
                     } else {
                         // Direct MP4 link
                         window.open(resData.streamUrl, '_blank');
@@ -1857,6 +1884,9 @@
                 if (authModal.style.display === 'flex') {
                     authModal.style.display = 'none';
                 }
+                
+                closeCustomAlert();
+                closeCustomConfirm();
         }
     });
 

@@ -40,6 +40,7 @@ router.get('/', async (req, res) => {
         });
 
         let streamUrl = null;
+        let streamHeaders = {};
 
         // Bypass basic headless detection
         await page.evaluateOnNewDocument(() => {
@@ -59,6 +60,7 @@ router.get('/', async (req, res) => {
                 
                 if (reqUrl.includes('.m3u8') || reqUrl.includes('.mp4') || reqUrl.includes('/playlist.m3u8')) {
                     streamUrl = reqUrl;
+                    streamHeaders = request.headers();
                     resolve();
                 }
                 
@@ -78,6 +80,7 @@ router.get('/', async (req, res) => {
                     contentType.includes('application/dash+xml')
                 ) {
                     streamUrl = resUrl;
+                streamHeaders = response.request().headers();
                     resolve();
                 }
             });
@@ -129,10 +132,28 @@ router.get('/', async (req, res) => {
             return res.status(404).json({ error: 'Could not detect a downloadable video stream on the source page.' });
         }
 
-        // Return the raw URL back to the frontend to handle using local resources
+        // Extract the exact headers demanded by the streaming server
+        const referer = streamHeaders['referer'] || url;
+        const origin = streamHeaders['origin'] || (url.startsWith('http') ? new URL(url).origin : '');
+        const userAgent = streamHeaders['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
+        // Generate commands for tools that allow HTTP header spoofing
+        const ffmpegCmd = `ffmpeg -headers "Referer: ${referer}\r\nOrigin: ${origin}\r\n" -user_agent "${userAgent}" -i "${streamUrl}" -c copy "output.mp4"`;
+        const ytdlpCmd = `yt-dlp --referer "${referer}" --add-header "Origin: ${origin}" --user-agent "${userAgent}" "${streamUrl}" -o "output.mp4"`;
+
+        // Return the raw URL and spoofing data back to the frontend
         res.json({
             streamUrl: streamUrl,
-            isHls: streamUrl.includes('.m3u8')
+            isHls: streamUrl.includes('.m3u8'),
+            headers: {
+                referer: referer,
+                origin: origin,
+                userAgent: userAgent
+            },
+            commands: {
+                ffmpeg: ffmpegCmd,
+                ytdlp: ytdlpCmd
+            }
         });
 
     } catch (error) {
