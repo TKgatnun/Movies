@@ -2,10 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TKmovies · Futuristic Streaming</title>
+    <title>TK ENTERTAINMENT · Futuristic Streaming</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #b026ff;
+            --primary-color-hover: #8c1cce;
+            --primary-color-lighter: #d470ff;
+            --primary-color-trans: hsla(278, 100%, 57%, 0.4);
+            --primary-color-shadow: hsla(278, 100%, 57%, 0.6);
+            --primary-color-light: hsla(278, 100%, 57%, 0.15);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
@@ -32,7 +40,7 @@
             border-bottom: 1px solid #222;
         }
         h1 {
-            color: #b026ff;
+            color: var(--primary-color);
             font-size: 1.6rem;
             font-weight: 800;
             letter-spacing: -0.5px;
@@ -40,7 +48,7 @@
             align-items: center;
             gap: 0.3rem;
             white-space: nowrap;
-            text-shadow: 0 0 8px #b026ff66;
+            text-shadow: 0 0 8px var(--primary-color-shadow);
             cursor: pointer;
         }
         #search-container {
@@ -61,8 +69,8 @@
         }
         #search-input:focus {
             outline: none;
-            border-color: #b026ff;
-            box-shadow: 0 0 12px #b026ff;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 12px var(--primary-color);
         }
         .search-icon {
             position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%);
@@ -79,7 +87,7 @@
             flex-shrink: 0;
             transition: 0.2s;
         }
-        .user-btn:hover { background: #b026ff; border-color: #b026ff; }
+        .user-btn:hover { background: var(--primary-color); border-color: var(--primary-color); }
         .filters {
             padding: 0.5rem 1rem;
             background: #0a0a0a;
@@ -114,7 +122,7 @@
             white-space: nowrap;
             transition: 0.2s;
         }
-        .type-btn.active { background: #b026ff; color: white; box-shadow: 0 0 10px #b026ff; }
+        .type-btn.active { background: var(--primary-color); color: white; box-shadow: 0 0 10px var(--primary-color); }
 
         .extra-filters {
             display: flex;
@@ -147,7 +155,7 @@
             background-position: right 0.5rem center;
         }
         .apply-filter-btn {
-            background: #b026ff;
+            background: var(--primary-color);
             border: none;
             border-radius: 40px;
             padding: 0.4rem 1.2rem;
@@ -157,7 +165,7 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        .apply-filter-btn:hover { background: #8c1cce; }
+        .apply-filter-btn:hover { background: var(--primary-color-hover); }
 
         .carousel-section {
             padding: 0.2rem 0 1rem;
@@ -169,8 +177,8 @@
             margin: 0.8rem 1rem 0.5rem;
         }
         .section-header h2 {
-            font-size: 1.5rem; border-left: 5px solid #b026ff; padding-left: 0.7rem;
-            text-shadow: 0 0 8px #b026ff;
+            font-size: 1.5rem; border-left: 5px solid var(--primary-color); padding-left: 0.7rem;
+            text-shadow: 0 0 8px var(--primary-color);
             letter-spacing: -0.5px;
         }
         .carousel-wrapper {
@@ -178,7 +186,7 @@
             overflow: hidden;
             margin: 0 0.5rem;
             border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(176, 38, 255, 0.3);
+            box-shadow: 0 10px 30px var(--primary-color-trans);
         }
         .card-scroll {
             display: flex;
@@ -197,10 +205,10 @@
             background: #1a1a1a;
         }
         .card-scroll::-webkit-scrollbar-thumb {
-            background: #b026ff;
+            background: var(--primary-color);
             border-radius: 10px;
         }
-        .card-scroll { -ms-overflow-style: auto; scrollbar-width: thin; scrollbar-color: #b026ff #1a1a1a; }
+        .card-scroll { -ms-overflow-style: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) #1a1a1a; }
 
         .slide-card {
             flex: 0 0 calc(94% - 1rem);
@@ -216,16 +224,16 @@
             margin-left: 0.5rem;
             pointer-events: auto;
         }
-        .slide-card:hover { transform: scale(1.02) translateY(-6px); border-color: #b026ff; box-shadow: 0 0 30px #b026ff; }
+        .slide-card:hover { transform: scale(1.02) translateY(-6px); border-color: var(--primary-color); box-shadow: 0 0 30px var(--primary-color); }
         .slide-poster {
             width: 100%; height: 240px; object-fit: cover;
             transition: 0.3s;
-            border-bottom: 2px solid #b026ff40;
+            border-bottom: 2px solid var(--primary-color-trans);
         }
         .slide-trailer {
             width: 100%; height: 240px; object-fit: cover;
             display: none;
-            border-bottom: 2px solid #b026ff40;
+            border-bottom: 2px solid var(--primary-color-trans);
             pointer-events: none;
         }
         .slide-card.active-trailer .slide-poster { display: none; }
@@ -249,7 +257,7 @@
             transition: 0.2s;
             cursor: pointer;
         }
-        .indicator-dot.active { background: #b026ff; width: 28px; border-radius: 20px; }
+        .indicator-dot.active { background: var(--primary-color); width: 28px; border-radius: 20px; }
 
         .history-remove-btn {
             position: absolute; top: 8px; right: 8px;
@@ -262,7 +270,7 @@
         .slide-card:hover .history-remove-btn { opacity: 1; }
         .history-remove-btn:hover { background: #ff2e63; border-color: #ff2e63; }
         .history-info {
-            font-size: 0.8rem; color: #b026ff; margin-top: 0.2rem; font-weight: 600;
+            font-size: 0.8rem; color: var(--primary-color); margin-top: 0.2rem; font-weight: 600;
         }
 
         .genre-dropdown-container {
@@ -286,7 +294,7 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        .genre-dropdown-button:hover { border-color: #b026ff; }
+        .genre-dropdown-button:hover { border-color: var(--primary-color); }
         .genre-dropdown-button::after {
             content: '\f078';
             font-family: 'Font Awesome 6 Free'; font-weight: 900;
@@ -317,7 +325,7 @@
         }
         .genre-option:last-child { border-bottom: none; }
         .genre-option:hover,
-        .genre-option.selected { background: #b026ff; color: white; }
+        .genre-option.selected { background: var(--primary-color); color: white; }
 
         #movies-grid {
             display: grid;
@@ -337,7 +345,7 @@
             transition: 0.3s;
             position: relative;
         }
-        .movie-card:hover { transform: translateY(-6px); border-color: #b026ff; box-shadow: 0 10px 20px rgba(176, 38, 255, 0.4); }
+        .movie-card:hover { transform: translateY(-6px); border-color: var(--primary-color); box-shadow: 0 10px 20px var(--primary-color-trans); }
         .movie-poster {
             width: 100%; height: 200px; object-fit: cover;
             transition: 0.3s;
@@ -358,7 +366,7 @@
         .red { color: #db2360; }
         .tv-badge {
             position: absolute; top: 4px; left: 4px;
-            background: #b026ff; color: white; padding: 0.2rem 0.5rem;
+            background: var(--primary-color); color: white; padding: 0.2rem 0.5rem;
             border-radius: 20px; font-size: 0.6rem; font-weight: bold;
             z-index: 2;
         }
@@ -370,10 +378,10 @@
         }
         .play-overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.8);
-            background: #b026ff; width: 42px; height: 42px; border-radius: 50%;
+            background: var(--primary-color); width: 42px; height: 42px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             opacity: 0; transition: 0.2s; cursor: pointer;
-            box-shadow: 0 0 15px #b026ff;
+            box-shadow: 0 0 15px var(--primary-color);
         }
         .movie-card:hover .play-overlay { opacity: 1; transform: translate(-50%,-50%) scale(1); }
 
@@ -387,7 +395,7 @@
             font-size: 1.2rem; cursor: pointer;
             transition: 0.2s;
         }
-        .page-btn:hover:not(:disabled) { background: #b026ff; border-color: #b026ff; }
+        .page-btn:hover:not(:disabled) { background: var(--primary-color); border-color: var(--primary-color); }
         .page-btn:disabled { opacity: 0.3; }
         #page-indicator {
             font-size: 1rem; background: #222; padding: 0.4rem 1.2rem; border-radius: 40px;
@@ -408,8 +416,8 @@
         }
         #back-btn {
             background: #1a1a1a;
-            border: 2px solid #b026ff;
-            color: #b026ff;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
             width: 42px;
             height: 42px;
             border-radius: 50%;
@@ -419,13 +427,13 @@
             font-size: 1.2rem;
             cursor: pointer;
             transition: 0.2s;
-            box-shadow: 0 0 12px #b026ff66;
+            box-shadow: 0 0 12px var(--primary-color-shadow);
         }
         #back-btn:hover {
-            background: #b026ff;
+            background: var(--primary-color);
             color: white;
             transform: scale(1.05);
-            box-shadow: 0 0 20px #b026ff;
+            box-shadow: 0 0 20px var(--primary-color);
         }
         .movie-title-header {
             font-size: 1.1rem;
@@ -448,8 +456,8 @@
             transition: 0.2s;
         }
         .control-btn:hover {
-            background: #b026ff;
-            border-color: #b026ff;
+            background: var(--primary-color);
+            border-color: var(--primary-color);
         }
         .player-main-area { flex: 1; position: relative; background: #000; }
         .player-container { width: 100%; height: 100%; position: relative; }
@@ -459,7 +467,7 @@
             position: absolute; 
             bottom: 120px; 
             right: 20px; 
-            background: rgba(176, 38, 255, 0.95); 
+            background: var(--primary-color); 
             border: 2px solid #fff; 
             color: white; 
             padding: 12px 20px; 
@@ -477,7 +485,7 @@
         }
         .skip-btn:hover { 
             background: #fff; 
-            color: #b026ff; 
+            color: var(--primary-color); 
             transform: scale(1.05);
         }
         .skip-btn.show { display: flex; }
@@ -498,7 +506,7 @@
             position: absolute;
             bottom: 120px;
             left: 20px;
-            background: rgba(176, 38, 255, 0.95);
+            background: var(--primary-color);
             border: 2px solid #fff;
             color: white;
             padding: 12px 20px;
@@ -516,7 +524,7 @@
         }
         .next-episode-btn:hover {
             background: #fff;
-            color: #b026ff;
+            color: var(--primary-color);
             transform: scale(1.05);
         }
         .next-episode-btn.show { display: flex; }
@@ -529,10 +537,10 @@
         
         .source-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
         .source-btn {
-            background: #1a1a1a; border: 1px solid #b026ff; color: white; padding: 6px 14px; border-radius: 40px; cursor: pointer; transition: 0.2s;
+            background: #1a1a1a; border: 1px solid var(--primary-color); color: white; padding: 6px 14px; border-radius: 40px; cursor: pointer; transition: 0.2s;
         }
-        .source-btn:hover { background: #b026ff; }
-        .source-btn.active { background: #b026ff; box-shadow: 0 0 10px #b026ff; }
+        .source-btn:hover { background: var(--primary-color); }
+        .source-btn.active { background: var(--primary-color); box-shadow: 0 0 10px var(--primary-color); }
         
         .lang-toggle {
             display: flex;
@@ -555,12 +563,12 @@
             font-weight: 600;
             transition: 0.2s;
         }
-        .lang-btn:hover { border-color: #b026ff; }
+        .lang-btn:hover { border-color: var(--primary-color); }
         .lang-btn.active { 
-            background: #b026ff; 
-            border-color: #b026ff; 
+            background: var(--primary-color); 
+            border-color: var(--primary-color); 
             color: white; 
-            box-shadow: 0 0 10px #b026ff;
+            box-shadow: 0 0 10px var(--primary-color);
         }
         .tv-controls select { background: #1a1a1a; color: white; border: 1px solid #444; border-radius: 40px; padding: 4px 10px; margin-right: 8px; }
 
@@ -580,21 +588,21 @@
             backdrop-filter: blur(4px);
         }
         .site-footer i {
-            color: #b026ff;
+            color: var(--primary-color);
             margin: 0 0.25rem;
             font-size: 1.1rem;
         }
         .site-footer .footer-heart {
-            color: #b026ff;
+            color: var(--primary-color);
             animation: pulse 1.8s infinite;
         }
         .site-footer .footer-name {
             font-weight: 700;
             color: #fff;
-            background: linear-gradient(145deg, #b026ff, #d470ff);
+            background: linear-gradient(145deg, var(--primary-color), var(--primary-color-lighter));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 8px #b026ff66;
+            text-shadow: 0 0 8px var(--primary-color-shadow);
             letter-spacing: 0.5px;
         }
         @keyframes pulse {
@@ -611,22 +619,22 @@
         .auth-box {
             background: #111; border: 1px solid #333; padding: 2rem; border-radius: 24px;
             width: 100%; max-width: 400px; position: relative;
-            box-shadow: 0 0 30px rgba(176, 38, 255, 0.2);
+            box-shadow: 0 0 30px var(--primary-color-light);
         }
         .auth-header { text-align: center; margin-bottom: 1.5rem; }
-        .auth-header h2 { color: #b026ff; margin-bottom: 0.5rem; }
+        .auth-header h2 { color: var(--primary-color); margin-bottom: 0.5rem; }
         .auth-input {
             width: 100%; background: #1a1a1a; border: 1px solid #333; color: white;
             padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 1rem; font-size: 1rem;
         }
-        .auth-input:focus { outline: none; border-color: #b026ff; }
+        .auth-input:focus { outline: none; border-color: var(--primary-color); }
         .auth-btn {
-            width: 100%; background: #b026ff; color: white; border: none; padding: 0.8rem;
+            width: 100%; background: var(--primary-color); color: white; border: none; padding: 0.8rem;
             border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s;
         }
-        .auth-btn:hover { background: #8c1cce; }
+        .auth-btn:hover { background: var(--primary-color-hover); }
         .auth-switch { text-align: center; margin-top: 1rem; font-size: 0.9rem; color: #888; }
-        .auth-switch span { color: #b026ff; cursor: pointer; font-weight: 600; }
+        .auth-switch span { color: var(--primary-color); cursor: pointer; font-weight: 600; }
         .auth-close {
             position: absolute; top: 1rem; right: 1rem; color: #666; cursor: pointer; font-size: 1.2rem;
         }
@@ -638,8 +646,8 @@
             display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;
             transition: 0.2s;
         }
-        .user-profile-btn:hover { border-color: #b026ff; color: #b026ff; }
-        .user-profile-btn.logged-in { background: #b026ff22; border-color: #b026ff; }
+        .user-profile-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        .user-profile-btn.logged-in { background: var(--primary-color-light); border-color: var(--primary-color); }
 
         @media (max-width: 600px) {
             header { flex-wrap: wrap; }
@@ -661,7 +669,7 @@
 
 <div class="main-content">
     <header>
-        <h1><i class="fas fa-film"></i> TKmovies</h1>
+        <h1><i class="fas fa-film"></i> TK ENTERTAINMENT</h1>
         <div id="search-container">
             <i class="fas fa-search search-icon"></i>
             <input type="text" id="search-input" placeholder="Search...">
@@ -700,7 +708,7 @@
 
     <div class="carousel-section" id="continue-watching-section" style="display:none;">
         <div class="section-header">
-            <h2><i class="fas fa-history" style="color:#b026ff;"></i> CONTINUE WATCHING</h2>
+            <h2><i class="fas fa-history" style="color:var(--primary-color);"></i> CONTINUE WATCHING</h2>
         </div>
         <div class="carousel-wrapper">
             <div class="card-scroll" id="continue-watching-scroll"></div>
@@ -709,8 +717,8 @@
 
     <div class="carousel-section">
         <div class="section-header">
-            <h2><i class="fas fa-fire" style="color:#b026ff;"></i> NOW PLAYING</h2>
-            <span style="color:#b026ff; font-size:0.9rem; margin-right:1rem;">← Auto Revolving →</span>
+            <h2><i class="fas fa-fire" style="color:var(--primary-color);"></i> NOW PLAYING</h2>
+            <span style="color:var(--primary-color); font-size:0.9rem; margin-right:1rem;">← Auto Revolving →</span>
         </div>
         <div class="carousel-wrapper" id="carousel-wrapper">
             <div class="card-scroll" id="latest-carousel"></div>
@@ -734,7 +742,7 @@
         <i class="fas fa-heart footer-heart"></i> 
         by 
         <span class="footer-name">TK</span>
-        <i class="fas fa-bolt" style="color:#b026ff;"></i>
+        <i class="fas fa-bolt" style="color:var(--primary-color);"></i>
     </span>
 </footer>
 
@@ -744,9 +752,6 @@
             <button class="back-btn" id="back-btn"><i class="fas fa-arrow-left"></i></button>
             <div class="movie-title-header" id="movie-title-header"></div>
             <div style="display: flex; gap: 0.5rem;">
-                <button class="control-btn" id="download-btn" title="Download Movie" style="display: none;">
-                    <i class="fas fa-download"></i>
-                </button>
                 <button class="control-btn" id="refresh-player"><i class="fas fa-redo"></i></button>
                 <button class="control-btn" id="fullscreen-modal-toggle"><i class="fas fa-expand"></i></button>
             </div>
@@ -774,9 +779,9 @@
                 </div>
                 
                 <div id="player-error" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#111; padding:1.5rem; border-radius:24px;">
-                    <h3 style="color:#b026ff;">⚠️ Playback error</h3>
+                    <h3 style="color:var(--primary-color);">⚠️ Playback error</h3>
                     <p id="error-text">Source failed.</p>
-                    <button id="retry-btn" style="background:#b026ff; border:none; color:white; padding:0.5rem 1.5rem; border-radius:40px;">Switch source</button>
+                    <button id="retry-btn" style="background:var(--primary-color); border:none; color:white; padding:0.5rem 1.5rem; border-radius:40px;">Switch source</button>
                 </div>
             </div>
         </div>
@@ -843,6 +848,20 @@
 </div>
 
 <script>
+(function() {
+    let hue = 278;
+    function updateColor() {
+        hue = (hue + 0.3) % 360;
+        document.documentElement.style.setProperty('--primary-color', `hsl(${hue}, 100%, 57%)`);
+        document.documentElement.style.setProperty('--primary-color-hover', `hsl(${hue}, 100%, 47%)`);
+        document.documentElement.style.setProperty('--primary-color-lighter', `hsl(${hue}, 100%, 72%)`);
+        document.documentElement.style.setProperty('--primary-color-trans', `hsla(${hue}, 100%, 57%, 0.4)`);
+        document.documentElement.style.setProperty('--primary-color-shadow', `hsla(${hue}, 100%, 57%, 0.6)`);
+        document.documentElement.style.setProperty('--primary-color-light', `hsla(${hue}, 100%, 57%, 0.15)`);
+        requestAnimationFrame(updateColor);
+    }
+    updateColor();
+})();
 (function() {
     const TMDB_API_KEY = 'a61fccf34d3b7d0701fcdde5db6043ab';
     const TMDB_READ_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhNjFmY2NmMzRkM2I3ZDA3MDFmY2RkZTVkYjYwNDNhYiIsIm5iZiI6MTc2MzY0NjIxOS45MSwic3ViIjoiNjkxZjFiMGI0ZWEwMzMyNDQ1MDU4NmRhIiwic2NvcGVzIjpbImFwaV9yZWFkIl0sInZlcnNpb24iOjF9.C29__PfaNFBL2P2mSh8Yf3Rpzj78kz80rB2y5eGIHRM';
@@ -1306,7 +1325,7 @@
             e.preventDefault();
             // Visual feedback
             searchInput.style.transform = 'scale(0.95)';
-            searchInput.style.boxShadow = '0 0 15px #b026ff';
+            searchInput.style.boxShadow = '0 0 15px var(--primary-color)';
             setTimeout(() => {
                 searchInput.style.transform = 'scale(1)';
                 searchInput.style.boxShadow = 'none';
