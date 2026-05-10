@@ -1905,8 +1905,8 @@
                     authModal.style.display = 'none';
                 }
                 
-                closeCustomAlert();
-                closeCustomConfirm();
+                if (typeof closeCustomAlert === 'function') closeCustomAlert();
+                if (typeof closeCustomConfirm === 'function') closeCustomConfirm();
         }
     });
 
